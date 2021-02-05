@@ -5,3 +5,9 @@ CREATE TABLE public.sample_table (
     created_at timestamp without time zone DEFAULT now() NOT NULL,
     sample VARCHAR(255)
 );
+
+CREATE TABLE auth_requests (
+  id int NOT NULL,
+  username VARCHAR(255),
+  password VARCHAR(255)
+);
