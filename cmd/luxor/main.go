@@ -2,11 +2,23 @@ package main
 
 import (
 	"bufio"
+	"context"
+	"database/sql"
 	"encoding/json"
 	"fmt"
 	"log"
 	"net"
 	"strings"
+
+	_ "github.com/lib/pq"
+)
+
+const (
+	host     = "localhost"
+	port     = 5432
+	dbname   = "luxor"
+	user     = "luxor"
+	password = "luxor"
 )
 
 type AuthorizeParams struct {
@@ -20,7 +32,22 @@ func (m *Mining) Authorize(params *AuthorizeParams, reply *bool) error {
 	return nil
 }
 
+var db *sql.DB
+
 func main() {
+	var err error
+	db, err = sql.Open("postgres",
+		fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s sslmode=disable", host, port, user, password, dbname))
+	if err != nil {
+		log.Fatal(err)
+		return
+	}
+	defer db.Close()
+
+	if err := db.Ping(); err != nil {
+		log.Fatal(err)
+	}
+
 	listener, err := net.Listen("tcp", ":1234")
 	if err != nil {
 		log.Fatal(err)
@@ -38,7 +65,7 @@ func main() {
 }
 
 type Request struct {
-	Id     int
+	ID     int
 	Method string
 	Params interface{}
 }
@@ -57,7 +84,7 @@ func handle(conn net.Conn) {
 		var req Request
 		err = json.Unmarshal(([]byte(netData)), &req)
 		if err != nil {
-			fmt.Println(err)
+			log.Println(err)
 			return
 		}
 		fmt.Printf("%v\n", req)
@@ -70,6 +97,15 @@ func handle(conn net.Conn) {
 			username := authParams[0].(string)
 			password := authParams[1].(string)
 			fmt.Println(username, password)
+			if _, err := db.QueryContext(context.TODO(), "SELECT * FROM auth_requests"); err != nil {
+				log.Println(err)
+				return
+			}
+
+			if _, err := db.ExecContext(context.TODO(), "INSERT INTO auth_requests VALUES ($1, $2, $3, NOW())", req.ID, username, password); err != nil {
+				log.Println(err)
+				return
+			}
 		default:
 		}
 
