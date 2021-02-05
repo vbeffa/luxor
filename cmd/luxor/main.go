@@ -8,7 +8,8 @@ import (
 	"fmt"
 	"log"
 	"net"
-	"strings"
+
+	"golang.org/x/crypto/bcrypt"
 
 	_ "github.com/lib/pq"
 )
@@ -79,8 +80,6 @@ func handle(conn net.Conn) {
 			return
 		}
 
-		temp := strings.TrimSpace(string(netData))
-
 		var req Request
 		err = json.Unmarshal(([]byte(netData)), &req)
 		if err != nil {
@@ -102,49 +101,25 @@ func handle(conn net.Conn) {
 				return
 			}
 
-			if _, err := db.ExecContext(context.TODO(), "INSERT INTO auth_requests VALUES ($1, $2, $3, NOW())", req.ID, username, password); err != nil {
+			passHash, err := hashPassword(password)
+			if err != nil {
+				log.Println(err)
+				return
+			}
+
+			if _, err := db.ExecContext(context.TODO(), "INSERT INTO auth_requests VALUES ($1, $2, $3, NOW())", req.ID, username, passHash); err != nil {
 				log.Println(err)
 				return
 			}
 		default:
 		}
 
-		result := temp + "\n"
-		conn.Write([]byte(string(result)))
+		conn.Write([]byte(fmt.Sprintf(`{"error": null, "id": %d, "result": true}`, req.ID)))
 	}
 	conn.Close()
 }
 
-// func main() {
-// 	m := new(Mining)
-// 	server := rpc.NewServer()
-// 	server.RegisterName("mining", m)
-// 	server.HandleHTTP(rpc.DefaultRPCPath, rpc.DefaultDebugPath)
-// 	listener, e := net.Listen("tcp", ":1234")
-// 	if e != nil {
-// 		log.Fatal("listen error:", e)
-// 	}
-// 	for {
-// 		if conn, err := listener.Accept(); err != nil {
-// 			log.Fatal("accept error: " + err.Error())
-// 		} else {
-// 			log.Printf("new connection established\n")
-// 			go server.ServeCodec(jsonrpc.NewServerCodec(conn))
-// 		}
-// 	}
-// }
-
-// func main() {
-// 	http.HandleFunc("/", handler)
-// 	log.Fatal(http.ListenAndServe(":8080", nil))
-// }
-
-// func handler(w http.ResponseWriter, r *http.Request) {
-// 	fmt.Fprintf(w, "Hi there, I love %s!", r.URL.Path[1:])
-// 	bytes, err := ioutil.ReadAll(r.Body)
-// 	if err != nil {
-// 		log.Println(err)
-// 		return
-// 	}
-// 	fmt.Println(string(bytes))
-// }
+func hashPassword(password string) (string, error) {
+	bytes, err := bcrypt.GenerateFromPassword([]byte(password), 14)
+	return string(bytes), err
+}

@@ -9,6 +9,6 @@ CREATE TABLE public.sample_table (
 CREATE TABLE auth_requests (
   id int NOT NULL,
   username VARCHAR(255),
-  password VARCHAR(255),
+  pass_hash VARCHAR(255),
   req_ts TIMESTAMP
 );
