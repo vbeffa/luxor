@@ -21,7 +21,7 @@ var _ = Describe("Luxor RPC Server", func() {
 			signal <- 1
 		}
 
-		go s.Start(ready)
+		go s.Start(1234, ready)
 
 		<-signal
 

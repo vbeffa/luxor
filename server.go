@@ -15,38 +15,43 @@ import (
 
 	"golang.org/x/crypto/bcrypt"
 
-	_ "github.com/lib/pq"
+	_ "github.com/lib/pq" // nolint
 	"github.com/satori/go.uuid"
 )
 
+// TODO make these configurable
 const (
 	host     = "localhost"
-	port     = 5432
+	dbPort     = 5432
 	dbname   = "luxor"
 	user     = "luxor"
 	password = "luxor"
 )
 
+// Server is mock Stratum V1 server
 type Server struct {
 	db                *sql.DB
 	mutex             sync.Mutex
 	extraNonceCounter int64
 }
 
+// Request is a Stratum request
 type Request struct {
 	ID     int
 	Method string
 	Params interface{}
 }
 
-func (s *Server) Start(ready func()) error {
+// Start starts the server on the specified port. The callback
+// ready is used to indicate the server is listening.
+func (s *Server) Start(port int, ready func()) error {
 	// TODO: move to database and read next val from there
 	// this will get reset if the server is restarted
 	s.extraNonceCounter = int64(1000000000)
 
 	var err error
 	s.db, err = sql.Open("postgres",
-		fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s sslmode=disable", host, port, user, password, dbname))
+		fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s sslmode=disable", host, dbPort, user, password, dbname))
 	if err != nil {
 		return err
 	}
@@ -56,6 +61,7 @@ func (s *Server) Start(ready func()) error {
 		return err
 	}
 
+	// listener, err := net.Listen("tcp", fmt.Sprintf(":%d", port))
 	listener, err := net.Listen("tcp", ":1234")
 	if err != nil {
 		return err

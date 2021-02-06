@@ -8,5 +8,5 @@ import (
 
 func main() {
 	s := luxor.Server{}
-	log.Fatal(s.Start(func() {}))
+	log.Fatal(s.Start(1234, func() {}))
 }
