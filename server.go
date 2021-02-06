@@ -61,12 +61,12 @@ func (s *Server) Start(port int, ready func()) error {
 		return err
 	}
 
-	// listener, err := net.Listen("tcp", fmt.Sprintf(":%d", port))
-	listener, err := net.Listen("tcp", ":1234")
+	listener, err := net.Listen("tcp", fmt.Sprintf(":%d", port))
 	if err != nil {
 		return err
 	}
 	ready()
+	log.Printf("Stratum server listening on port %d", port)
 	defer listener.Close()
 
 	for {
