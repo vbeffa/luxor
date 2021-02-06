@@ -6,5 +6,5 @@ import (
 
 func main() {
 	s := luxor.Server{}
-	s.Start()
+	s.Start(func() {})
 }
