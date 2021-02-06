@@ -58,6 +58,7 @@ func (s *Server) Start(port int, ready func()) error {
 	defer s.db.Close()
 
 	if err := s.db.Ping(); err != nil {
+		log.Println(err)
 		return err
 	}
 
