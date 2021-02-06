@@ -1,10 +1,12 @@
 package main
 
 import (
+	"log"
+
 	"vbeffa/luxor"
 )
 
 func main() {
 	s := luxor.Server{}
-	s.Start(func() {})
+	log.Fatal(s.Start(func() {}))
 }
